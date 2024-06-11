@@ -13,6 +13,16 @@ with open("config/kaggle.json", "r") as f:
 
 
 def download_flickr8k(save_path: str = "flickr-8k/raw/flickr-8k.zip"):
+    """
+    Downloads the Flickr8k dataset from Kaggle and saves it to the specified path.
+
+    Args:
+        save_path (str): The path to save the downloaded Flickr8k dataset zip file. Defaults to "flickr-8k/raw/flickr-8k.zip".
+
+    Raises:
+        FileNotFoundError: If the directory for the `save_path` does not exist and cannot be created.
+        requests.exceptions.RequestException: If there is an error downloading the dataset from Kaggle.
+    """
     # Ensure the directory for save_path exists
     os.makedirs(os.path.dirname(save_path), exist_ok=True)
     if os.path.exists(save_path):
@@ -39,6 +49,16 @@ def unzip_and_organize_flickr8k(
     zip_path: str = "flickr-8k/raw/flickr-8k.zip",
     extract_to: str = "flickr-8k/intermediate",
 ):
+    """
+    Unzips the Flickr8k dataset zip file and organizes the extracted files into the specified directory.
+
+    Args:
+        zip_path (str): The path to the Flickr8k dataset zip file. Defaults to "flickr-8k/raw/flickr-8k.zip".
+        extract_to (str): The path to the directory where the dataset should be extracted. Defaults to "flickr-8k/intermediate".
+
+    Raises:
+        FileNotFoundError: If the zip file does not exist at the specified `zip_path`.
+    """
     if not os.path.exists(zip_path):
         logger.error(
             f"Zip file does not exist at {zip_path}, run download_flickr8k first."
@@ -61,6 +81,17 @@ def unzip_and_organize_flickr8k(
 
 
 def prepare_flickr8k_csv(data_path: str = "flickr-8k/intermediate"):
+    """
+    Prepares a CSV file containing the image captions from the Flickr8k dataset.
+
+    The function reads the Flickr8k.token.txt file, which contains the image names and their corresponding captions, and creates a pandas DataFrame with the data. The DataFrame is then saved to a CSV file in the "processed" subdirectory of the data path.
+
+    Args:
+        data_path (str): The path to the intermediate directory containing the Flickr8k dataset files. Defaults to "flickr-8k/intermediate".
+
+    Raises:
+        FileNotFoundError: If the Flickr8k.token.txt file does not exist in the specified data path.
+    """
     token_file_path = os.path.join(data_path, "Flickr8k.token.txt")
     if not os.path.exists(token_file_path):
         logger.error(f"Token file does not exist at {token_file_path}.")
