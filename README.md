@@ -10,6 +10,15 @@ python scripts/download_mscoco.py
 python scripts/download_pascal50s.py
 ```
 
+## Getting Embeddings
+
+### OpenAI
+
+To get the OpenAI embeddings for the datasets, run the following commands, after completing the step "Getting Data":
+```bash
+python scripts/get_embeddings_openai.py
+```
+
 ## References
 
 ### PASCAL-50S
