@@ -14,7 +14,7 @@ def split_into_chunks(lst, chunk_size):
 def main():
     model="embed-english-v3.0"
     desc="Embedding chunks"
-    chunk_size = 128
+    chunk_size = 2048
 
     # Load API key from .env file
     load_dotenv()
@@ -31,9 +31,9 @@ def main():
     co = cohere.Client(api_key)
     # Get embeddings for each chunk
     flickr8k_embeddings = []
-    #for chunk in tqdm(caption_chunks_flickr8k, desc=desc):
-    #    embeddings = co.embed(texts=chunk, model=model,input_type="search_document").embeddings
-    #    flickr8k_embeddings.extend(embeddings)
+    for chunk in tqdm(caption_chunks_flickr8k, desc=desc):
+        embeddings = co.embed(texts=chunk, model=model,input_type="search_document").embeddings
+        flickr8k_embeddings.extend(embeddings)
 
     mscoco_embeddings = []
     for chunk in tqdm(caption_chunks_mscoco, desc=desc):
