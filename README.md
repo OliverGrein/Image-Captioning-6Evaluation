@@ -1,5 +1,27 @@
 # Image Captioning Evaluation
 
+## What this project is about
+
+//ToDo
+
+## Quickstart
+
+To get started, create a new environment and install the requirements:
+
+```bash
+python -m venv .venv
+source venv/bin/activate
+pip install -r requirements.txt
+```
+
+Then, pull the data from huggingface using the bootstrap script, which will put the data inside the `data` folder.:
+
+```bash
+python scripts/bootstrap.py
+```
+
+If you want to source the data and create the embeddings yourself, please follow the steps in the [Data](#data) section.
+
 ## Data
 
 ### Getting Data
