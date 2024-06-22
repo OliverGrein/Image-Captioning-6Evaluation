@@ -40,6 +40,18 @@ To get the VoyageAI embeddings for the datasets, run the following commands, aft
 python scripts/embeddings/get_voyageai_embeddings.py
 ```
 
+#### Cohere
+
+```env
+COHERE_API_KEY=<your-cohere-api-key>
+```
+
+To get the Cohere embeddings for the datasets, run the following commands, after completing the step [Getting Data](#getting-data):
+
+```bash
+python scripts/embeddings/get_cohere_embeddings.py
+```
+
 #### VertexAI
 
 **Please make sure you followed [Getting Data](#getting-data) before following this**
