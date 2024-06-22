@@ -2,3 +2,7 @@ pandas~=2.2.2
 beautifulsoup4~=4.12.3
 tqdm~=4.66.4
 requests~=2.32.3
+voyageai~=0.2.3
+python-dotenv~=1.0.1
+google~=3.0.0
+vertexai~=1.49.0

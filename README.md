@@ -1,13 +1,53 @@
 # Image Captioning Evaluation
 
-## Getting Data
+## Data
+
+### Getting Data
 
 To get the datasets, please run any combination of the following commands:
 
 ```bash
-python scripts/download_flickr8k.py
-python scripts/download_mscoco.py
-python scripts/download_pascal50s.py
+python scripts/download/download_flickr8k.py
+python scripts/download/download_mscoco.py
+python scripts/download/download_pascal50s.py
+```
+
+### Getting Embeddings
+
+To create embeddings yourself, first you need to create a `.env` file with the following variables (depending on which api you want to use).
+
+#### OpenAI
+
+```env
+OPENAI_API_KEY=<your-openai-api-key>
+```
+
+To get the OpenAI embeddings for the datasets, run the following commands, after completing the step [Getting Data](#getting-data):
+
+```bash
+python scripts/embeddings/get_embeddings_openai.py
+```
+
+#### VoyageAI
+
+```env
+VOYAGE_API_KEY=<your-voyageai-api-key>
+```
+
+To get the VoyageAI embeddings for the datasets, run the following commands, after completing the step [Getting Data](#getting-data):
+
+```bash
+python scripts/embeddings/get_voyageai_embeddings.py
+```
+
+#### VertexAI
+
+**Please make sure you followed [Getting Data](#getting-data) before following this**
+
+To use VertextAI please register the service for you project. Followingly you'll need to install the [gc-cli](https://cloud.google.com/sdk/docs/install?hl=de) and consequently run `gcloud auth applicaiton-default login`
+
+```bash
+python scripts/embeddings/get_vertexai_embeddings.py
 ```
 
 ## References
