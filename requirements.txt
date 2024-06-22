@@ -6,3 +6,4 @@ voyageai~=0.2.3
 python-dotenv~=1.0.1
 google~=3.0.0
 vertexai~=1.49.0
+cohere~=5.5.8
