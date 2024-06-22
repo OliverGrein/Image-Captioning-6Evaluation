@@ -1,6 +1,8 @@
 # Image Captioning Evaluation
 
-## Getting Data
+## Data
+
+### Getting Data
 
 To get the datasets, please run any combination of the following commands:
 
@@ -8,6 +10,22 @@ To get the datasets, please run any combination of the following commands:
 python scripts/download_flickr8k.py
 python scripts/download_mscoco.py
 python scripts/download_pascal50s.py
+```
+
+### Getting Embeddings
+
+To create embeddings yourself, first you need to create a `.env` file with the following variables (depending on which api you want to use):
+
+```env
+OPENAI_API_KEY=<your-openai-api-key>
+```
+
+#### OpenAI
+
+To get the OpenAI embeddings for the datasets, run the following commands, after completing the step "Getting Data":
+
+```bash
+python scripts/get_embeddings_openai.py
 ```
 
 ## References
