@@ -1,1 +1,0 @@
-data/openai_embeddings/* filter=lfs diff=lfs merge=lfs -text
