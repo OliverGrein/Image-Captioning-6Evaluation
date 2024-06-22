@@ -47,7 +47,7 @@ OPENAI_API_KEY=<your-openai-api-key>
 To get the OpenAI embeddings for the datasets, run the following commands, after completing the step [Getting Data](#getting-data):
 
 ```bash
-python scripts/embeddings/get_embeddings_openai.py
+python scripts/embeddings/get_openai_embeddings.py
 ```
 
 #### VoyageAI
