@@ -8,12 +8,14 @@ from pathlib import Path
 from metrics.chebyshev import chebyshev_distance
 from metrics.cosine import cosine_similarity 
 from metrics.euclidian import euclidian_distance
+from metrics.minkowski import minkowski_distance
 
 
 metrics = {
     "chebyshev": chebyshev_distance,
     "cosine": cosine_similarity,
-    "euclidian": euclidian_distance
+    "euclidian": euclidian_distance,
+    "minkowski": minkowski_distance
 }
 
 
