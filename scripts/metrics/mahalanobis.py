@@ -1,6 +1,5 @@
 import numpy as np
 import numpy.typing as npt
-from scipy.stats import multivariate_normal
 
 
 def mahalanobis_distance(reference: npt.NDArray, candidate: npt.NDArray) -> float:
@@ -20,16 +19,20 @@ def mahalanobis_distance(reference: npt.NDArray, candidate: npt.NDArray) -> floa
     if reference.shape != candidate.shape:
         raise ValueError("Input vectors must have the same shape.")
 
-    # Combine the vectors into a single array
-    X = np.vstack([reference, candidate])
+    # Ensure the input arrays are 1D
+    reference = reference.flatten()
+    candidate = candidate.flatten()
 
-    # Calculate the covariance matrix
-    cov = np.cov(X.T)
+    # Calculate the difference between candidate and reference
+    diff = candidate - reference
 
-    # Calculate the mean of the reference vector
-    mean = np.mean(reference)
+    # Use the variance of each feature instead of covariance matrix
+    var = np.var(np.vstack([reference, candidate]), axis=0)
+    
+    # Replace zero variances with a small positive number to avoid division by zero
+    var = np.where(var == 0, 1e-8, var)
 
     # Mahalanobis distance
-    mahalanobis_dist = multivariate_normal.mahalanobis(candidate, mean, cov)
+    mahalanobis_dist = np.sqrt(np.sum(diff**2 / var))
     
     return mahalanobis_dist
