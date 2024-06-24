@@ -9,13 +9,15 @@ from metrics.chebyshev import chebyshev_distance
 from metrics.cosine import cosine_similarity 
 from metrics.euclidian import euclidian_distance
 from metrics.minkowski import minkowski_distance
+from metrics.mahalanobis import mahalanobis_distance
 
 
 metrics = {
     "chebyshev": chebyshev_distance,
     "cosine": cosine_similarity,
     "euclidian": euclidian_distance,
-    "minkowski": minkowski_distance
+    "minkowski": minkowski_distance,
+    "mahalanobis": mahalanobis_distance
 }
 
 
@@ -55,7 +57,7 @@ def get_available_embedding_datasets() -> dict:
     return available_datasets
 
 
-def measure_distance(dataset: str, metric: str, image: str = None):
+def measure_distance(dataset: str, metric: str, image: str = None, p: float = 2):
     """
     This function measures the distance for all reference and candidate embeddings for an image in one of the embedding datasets.
     Data is stored in the Image-Captioning-6Evaluation/data/ directory.
@@ -64,8 +66,9 @@ def measure_distance(dataset: str, metric: str, image: str = None):
 
     Args:
         dataset (str): The dataset to use (e.g. "cohere/flickr8k").
-        metric (str): The metric to use. ("chebushev", "cosine", or "euclidian").
+        metric (str): The metric to use. ("chebyshev", "cosine", "euclidian", "minkowski", or "mahalanobis").
         image (str): The image to use. (e.g. "1000268201_693b08cb0e.jpg")
+        p (float): The order of the Minkowski distance. Default is 2 (Euclidean distance). Only used if metric is "minkowski".
 
     """
     available_datasets = get_available_embedding_datasets()
@@ -96,7 +99,7 @@ def measure_distance(dataset: str, metric: str, image: str = None):
                 reference = np.array(eval(images_df.iloc[i]['embedding']))
                 candidate = np.array(eval(images_df.iloc[j]['embedding']))        
 
-                distance = metrics[metric](reference, candidate)
+                distance = metrics[metric](reference, candidate, p) if metric == "minkowski" else metrics[metric](reference, candidate)
 
                 values.append({"reference": images_df.iloc[i]['image'], "candidate": images_df.iloc[j]['image'], "distance": distance})
         
