@@ -106,7 +106,7 @@ def measure_distance(dataset: str, metric: str, image: str = None, p: float = 2)
         out_df = pd.DataFrame(values, columns=["reference", "candidate", "distance"])
         print(out_df)
 
-        out_df.to_csv(Path(data_path / f"{dataset.replace("/", "_")}_{metric}_{image.replace(".", "_")}_distances.csv").as_posix(), index=False)
+        out_df.to_csv(Path(data_path / f"{dataset.replace('/', '_')}_{metric}_{image.replace('.', '_')}_distances.csv").as_posix(), index=False)
 
     else:
         raise NotImplementedError("Calculating the distance for all images in the dataset is not yet implemented.")
