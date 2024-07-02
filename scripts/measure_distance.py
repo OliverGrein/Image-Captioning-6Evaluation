@@ -121,4 +121,4 @@ def measure_distance(dataset: str, metric: str, image: str = None, p: float = 2)
         raise NotImplementedError("Calculating the distance for all images in the dataset is not yet implemented.")
 
 if __name__ == "__main__":
-    measure_distance(dataset="openai/flickr8k", metric="mahalanobis", image="1000268201_693b08cb0e.jpg")
+    measure_distance(dataset="openai/flickr8k", metric="cosine", image="1000268201_693b08cb0e.jpg")
