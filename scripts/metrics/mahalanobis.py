@@ -1,8 +1,21 @@
 import numpy as np
-import numpy.typing as npt
+from scipy.spatial.distance import mahalanobis
 
+# Global variable to store the inverse covariance matrix
+inv_cov = None
 
-def mahalanobis_distance(reference: npt.NDArray, candidate: npt.NDArray) -> float:
+def compute_inv_cov(embeddings):
+    global inv_cov
+    if inv_cov is None:
+        # Compute the covariance matrix
+        cov = np.cov(embeddings.T)
+        # Add a small constant to the diagonal to ensure positive definiteness
+        cov += np.eye(cov.shape[0]) * 1e-6
+        # Compute the inverse of the covariance matrix
+        inv_cov = np.linalg.inv(cov)
+    return inv_cov
+
+def mahalanobis_distance(x, y, inv_cov):
     """
     This function measures the Mahalanobis distance between two n-dimensional vectors.
 
@@ -16,23 +29,4 @@ def mahalanobis_distance(reference: npt.NDArray, candidate: npt.NDArray) -> floa
     Raises:
         ValueError: If the input vectors have different shapes.
     """
-    if reference.shape != candidate.shape:
-        raise ValueError("Input vectors must have the same shape.")
-
-    # Ensure the input arrays are 1D
-    reference = reference.flatten()
-    candidate = candidate.flatten()
-
-    # Calculate the difference between candidate and reference
-    diff = candidate - reference
-
-    # Use the variance of each feature instead of covariance matrix
-    var = np.var(np.vstack([reference, candidate]), axis=0)
-    
-    # Replace zero variances with a small positive number to avoid division by zero
-    var = np.where(var == 0, 1e-8, var)
-
-    # Mahalanobis distance
-    mahalanobis_dist = np.sqrt(np.sum(diff**2 / var))
-    
-    return mahalanobis_dist
+    return mahalanobis(x, y, inv_cov)

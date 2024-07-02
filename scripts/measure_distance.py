@@ -9,7 +9,7 @@ from metrics.chebyshev import chebyshev_distance
 from metrics.cosine import cosine_similarity 
 from metrics.euclidian import euclidian_distance
 from metrics.minkowski import minkowski_distance
-from metrics.mahalanobis import mahalanobis_distance
+from metrics.mahalanobis import mahalanobis_distance, compute_inv_cov
 
 
 metrics = {
@@ -82,6 +82,10 @@ def measure_distance(dataset: str, metric: str, image: str = None, p: float = 2)
 
     df = pd.read_csv(available_datasets[dataset])
 
+    # Compute inverse covariance matrix for all embeddings
+    all_embeddings = np.array([eval(emb) for emb in df['embedding']])
+    inv_cov = compute_inv_cov(all_embeddings)
+
     if image:
         images_df = df[df['image'].str.contains(f'{image}')].copy() # Get all images that start with the given image name
 
@@ -99,7 +103,12 @@ def measure_distance(dataset: str, metric: str, image: str = None, p: float = 2)
                 reference = np.array(eval(images_df.iloc[i]['embedding']))
                 candidate = np.array(eval(images_df.iloc[j]['embedding']))        
 
-                distance = metrics[metric](reference, candidate, p) if metric == "minkowski" else metrics[metric](reference, candidate)
+                if metric == "minkowski":
+                    distance = metrics[metric](reference, candidate, p)
+                elif metric == "mahalanobis":
+                    distance = metrics[metric](reference, candidate, inv_cov)
+                else:
+                    distance = metrics[metric](reference, candidate)
 
                 values.append({"reference": images_df.iloc[i]['image'], "candidate": images_df.iloc[j]['image'], "distance": distance})
         
@@ -112,4 +121,4 @@ def measure_distance(dataset: str, metric: str, image: str = None, p: float = 2)
         raise NotImplementedError("Calculating the distance for all images in the dataset is not yet implemented.")
 
 if __name__ == "__main__":
-    measure_distance(dataset="openai/flickr8k", metric="cosine", image="1000268201_693b08cb0e.jpg")
+    measure_distance(dataset="openai/flickr8k", metric="mahalanobis", image="1000268201_693b08cb0e.jpg")
