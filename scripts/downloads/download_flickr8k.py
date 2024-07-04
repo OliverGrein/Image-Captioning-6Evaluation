@@ -3,6 +3,7 @@ import json
 import os
 import requests
 import zipfile
+import numpy as np
 
 import pandas as pd
 
@@ -80,14 +81,15 @@ def unzip_and_organize_flickr8k(
         logger.info(f"Dataset unzipped successfully to {extract_to}")
 
 
-def prepare_flickr8k_csv(data_path: str = "flickr-8k/intermediate"):
+def prepare_flickr8k_csv(data_path: str = "data/flickr-8k/intermediate"):
     """
     Prepares a CSV file containing the image captions from the Flickr8k dataset.
 
-    The function reads the Flickr8k.token.txt file, which contains the image names and their corresponding captions, and creates a pandas DataFrame with the data. The DataFrame is then saved to a CSV file in the "processed" subdirectory of the data path.
+    The function reads the Flickr8k.token.txt file, which contains the caption IDs and their corresponding captions,
+    and creates a pandas DataFrame with the data. The DataFrame is then saved to a CSV file in the "processed" subdirectory.
 
     Args:
-        data_path (str): The path to the intermediate directory containing the Flickr8k dataset files. Defaults to "flickr-8k/intermediate".
+        data_path (str): The path to the intermediate directory containing the Flickr8k dataset files.
 
     Raises:
         FileNotFoundError: If the Flickr8k.token.txt file does not exist in the specified data path.
@@ -100,19 +102,112 @@ def prepare_flickr8k_csv(data_path: str = "flickr-8k/intermediate"):
     data = []
     with open(token_file_path, "r") as file:
         for line in file:
-            image, caption = line.strip().split("\t")
-            data.append({"image": image, "caption": caption})
+            caption_id, caption = line.strip().split("\t")
+            data.append({"caption_id": caption_id, "caption": caption})
 
     df = pd.DataFrame(data)
 
     csv_path = os.path.join(
-        os.path.dirname(data_path), "processed/flickr8k_captions.csv"
+        os.path.dirname(data_path), "processed", "flickr8k_captions.csv"
     )
-
     os.makedirs(os.path.dirname(csv_path), exist_ok=True)
-
     df.to_csv(csv_path, index=False)
-    logger.info(f"CSV file created successfully at {csv_path}")
+    logger.info(f"Captions CSV file created successfully at {csv_path}")
+    return df
+
+
+def prepare_expert_annotations(data_path: str = "data/flickr-8k/intermediate"):
+    """
+    Prepares a CSV file containing the expert annotations from the Flickr8k dataset.
+
+    The function reads the ExpertAnnotations.txt file, which contains the image names,
+    caption IDs, and expert judgments. It computes the average rating from the three
+    expert judgments and creates a pandas DataFrame with the data. The DataFrame is
+    then saved to a CSV file in the "processed" subdirectory of the data path.
+
+    Args:
+        data_path (str): The path to the intermediate directory containing the Flickr8k dataset files.
+                         Defaults to "data/flickr-8k/intermediate".
+
+    Raises:
+        FileNotFoundError: If the ExpertAnnotations.txt file does not exist in the specified data path.
+    """
+    annotations_file_path = os.path.join(data_path, "ExpertAnnotations.txt")
+    if not os.path.exists(annotations_file_path):
+        logger.error(
+            f"Expert annotations file does not exist at {annotations_file_path}."
+        )
+        return
+
+    data = []
+    with open(annotations_file_path, "r") as file:
+        for line in file:
+            parts = line.strip().split()
+            if len(parts) == 5:
+                image, caption_id = parts[0], parts[1]
+                ratings = [float(r) for r in parts[2:]]
+                avg_rating = np.mean(ratings)
+                data.append(
+                    {"image": image, "caption_id": caption_id, "avg_rating": avg_rating}
+                )
+
+    df = pd.DataFrame(data)
+
+    csv_path = os.path.join(
+        os.path.dirname(data_path), "processed", "flickr8k_expert_annotations.csv"
+    )
+    os.makedirs(os.path.dirname(csv_path), exist_ok=True)
+    df.to_csv(csv_path, index=False)
+    logger.info(f"Expert annotations CSV file created successfully at {csv_path}")
+    return df
+
+
+def prepare_crowdflower_annotations(data_path: str = "data/flickr-8k/intermediate"):
+    """
+    Prepares a CSV file containing the CrowdFlower annotations from the Flickr8k dataset.
+
+    The function reads the CrowdFlowerAnnotations.txt file, which contains the image names,
+    caption IDs, and crowd judgments. It extracts the percentage of 'Yes' responses and
+    creates a pandas DataFrame with the data. The DataFrame is then saved to a CSV file
+    in the "processed" subdirectory of the data path.
+
+    Args:
+        data_path (str): The path to the intermediate directory containing the Flickr8k dataset files.
+                         Defaults to "data/flickr-8k/intermediate".
+
+    Raises:
+        FileNotFoundError: If the CrowdFlowerAnnotations.txt file does not exist in the specified data path.
+    """
+    annotations_file_path = os.path.join(data_path, "CrowdFlowerAnnotations.txt")
+    if not os.path.exists(annotations_file_path):
+        logger.error(
+            f"CrowdFlower annotations file does not exist at {annotations_file_path}."
+        )
+        return
+
+    data = []
+    with open(annotations_file_path, "r") as file:
+        for line in file:
+            parts = line.strip().split()
+            if len(parts) >= 3:
+                image, caption_id, percent_yes = parts[0], parts[1], float(parts[2])
+                data.append(
+                    {
+                        "image": image,
+                        "caption_id": caption_id,
+                        "percent_yes": percent_yes,
+                    }
+                )
+
+    df = pd.DataFrame(data)
+
+    csv_path = os.path.join(
+        os.path.dirname(data_path), "processed", "flickr8k_crowdflower_annotations.csv"
+    )
+    os.makedirs(os.path.dirname(csv_path), exist_ok=True)
+    df.to_csv(csv_path, index=False)
+    logger.info(f"CrowdFlower annotations CSV file created successfully at {csv_path}")
+    return df
 
 
 def main():
@@ -121,6 +216,8 @@ def main():
         "data/flickr-8k/raw/flickr-8k.zip", "data/flickr-8k/intermediate"
     )
     prepare_flickr8k_csv("data/flickr-8k/intermediate")
+    prepare_expert_annotations("data/flickr-8k/intermediate")
+    prepare_crowdflower_annotations("data/flickr-8k/intermediate")
 
 
 if __name__ == "__main__":
