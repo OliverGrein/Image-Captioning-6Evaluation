@@ -1,8 +1,11 @@
+# This script was part of a different idea that we did not follow through with, but we included in the github for completeness
+
 from chameleon.inference.chameleon import ChameleonInferenceModel
 import os
 import pandas as pd
 
 def main():
+    # load chameleon model
     model = ChameleonInferenceModel(
         "meta-chameleon-7b/models/7b/",
         "meta-chameleon-7b/tokenizer/text_tokenizer.json",

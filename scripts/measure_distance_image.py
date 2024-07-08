@@ -1,11 +1,7 @@
 import numpy as np
 import os
-import sys
-import csv
 import pandas as pd
 import re
-from multiprocessing import Pool, cpu_count
-from functools import partial
 from pathlib import Path
 
 from metrics.chebyshev import chebyshev_distance
@@ -23,7 +19,7 @@ metrics = {
     "cosine": cosine_similarity,
     "euclidian": euclidian_distance,
     "minkowski": minkowski_distance,
-    "mahalanobis": mahalanobis_distance
+    #"mahalanobis": mahalanobis_distance
 }
 
 
@@ -119,11 +115,20 @@ def measure_distance(dataset: str, metric: str, image: str = None, p: float = 2)
         raise NotImplementedError("Calculating the distance for all images in the dataset is not yet implemented.")
 
 
-import numpy as np
-import pandas as pd
-import re
-from multiprocessing import Pool, cpu_count
-from functools import partial
+def min_max_scale(embedding):
+    """
+    Scales the embedding to the range [0, 1].
+
+    Args:
+        embedding (np.array): The embedding to scale.
+
+    Returns:
+        np.array: The scaled embedding.
+    """
+    min_val = np.min(embedding)
+    max_val = np.max(embedding)
+    scaled_embedding = (embedding - min_val) / (max_val - min_val)
+    return scaled_embedding
 
 def process_image_embedding(image_embedding, target_shape):
     n_sections = target_shape[0] // image_embedding.shape[1]
@@ -151,8 +156,7 @@ def process_image(base_image, df, image_embeddings, metrics, p):
         return []
 
     # Get the image embedding
-    if image_embeddings is not None:
-        #TODO: Select the image embeddings. 
+    if image_embeddings is not None: 
         image_embedding_sub_df = image_embeddings[image_embeddings['image'].apply(lambda x: re.sub(r'#\d+$', '', x)) == base_image].copy()
     else:
         print(f"Image embedding not found for {base_image}. Skipping.")
@@ -168,6 +172,11 @@ def process_image(base_image, df, image_embeddings, metrics, p):
                 # Preprocess the image embedding
                 image_embedding_processed = process_image_embedding(image_embedding, reference.shape)
                 
+                # Apply min-max scaling to image embeddings
+                reference = min_max_scale(reference)
+                candidate = min_max_scale(candidate)
+                image_embedding_processed = min_max_scale(image_embedding_processed)
+
                 if metric_name == "minkowski":
                     image_distance_reference = metric_func(image_embedding_processed, reference, p)
                     image_distance_candidate = metric_func(image_embedding_processed, candidate, p)
@@ -202,63 +211,48 @@ def measure_distance_image(dataset: str, image_embeddings: pd.DataFrame = None, 
         print(f"Dataset {dataset} not found.")
         return
 
+    # Load dataset and preprocess image paths
     df = pd.read_csv(available_datasets[dataset])
     df['image'] = df['image'].str[:-2]
     df = df[df['image'].str.endswith('.jpg')]
+
+    # Select current chunk
     df = df.iloc[CHUNK * CHUNK_SIZE * NUM_CHUNKS: (CHUNK + 1) * NUM_CHUNKS * CHUNK_SIZE]
 
     # Get unique base image names
     unique_base_images = df['image'].apply(lambda x: re.sub(r'#\d+$', '', x)).unique()
 
-    # # Set up multiprocessing
-    # num_processes = cpu_count()
-    # pool = Pool(processes=num_processes)
-
-    # # Partial function to pass static arguments
-    # process_image_partial = partial(process_image, df=df, image_embeddings=image_embeddings, metrics=metrics, p=p)
-
-    # # Process images in parallel
-    # all_values = pool.map(process_image_partial, unique_base_images)
-
-    # # Flatten the list of results
-    # all_values = [item for sublist in all_values for item in sublist]
-
-    # pool.close()
-    # pool.join()
-
+    # Preprocess and score image embeddings
     all_values = []
     for base_image in unique_base_images:
         chunk_values = process_image(base_image, df, image_embeddings, metrics, p)
         all_values.extend(chunk_values)
 
+    # Save image embeddings score
     out_df = pd.DataFrame(all_values, columns=["metric", "image", "reference", "candidate", "image_distance_reference", "image_distance_candidate"])
     print(out_df)
-    out_df.to_csv(f"{dataset}_all_images_distances_{CHUNK}.csv", index=False)
+    out_df.to_csv(f"{dataset}_new_all_images_distances_{CHUNK}.csv", index=False)
 
 def load_image_embeddings(directory):
     concatenated_array = None
-
-    # List to store filenames
     filenames = []
 
-    # Iterate over all files in the directory
+    # Create list of all .npy files in the directory
     for filename in os.listdir(directory):
-        # Check if the file is a .npy file
         if filename.endswith('.npy'):
             filenames.append(filename)
     
-    # Sort filenames numerically based on the numerical part
+    # Sort filenames numerically based on name
     filenames.sort(key=lambda x: int(x.split('_')[-1].split('.')[0]))
 
     # Limit the number of files to load
     filenames = filenames[CHUNK * NUM_CHUNKS: (CHUNK + 1) * NUM_CHUNKS]
     
+    # Load and merge image embeddings
     for filename in filenames:
         file_path = os.path.join(directory, filename)
-        # Load the numpy array from the file
         array = np.load(file_path)
         print(f"loaded {file_path}")
-        # Append the array to the concatenated_array
         if concatenated_array is None:
             concatenated_array = array
         else:
@@ -267,6 +261,20 @@ def load_image_embeddings(directory):
     return concatenated_array
 
 def create_image_embeddings_df(image_names, embeddings):
+    """
+    Checks dimensions of the data and creates a DataFrame holding the image name and the corresponding embedding
+
+    Args:
+        image_names (list of str): A list of image names.
+        embeddings (np.array): A array containing the embeddings for the images.
+
+    Returns:
+        pandas.DataFrame: A DataFrame with two columns: 'image' containing the image names and 'embedding' containing the corresponding embeddings.
+
+    Raises:
+        ValueError: If the number of image names does not match the number of embeddings.
+
+    """
     if len(image_names) != embeddings.shape[0]:
         raise ValueError("The number of image names does not match the number of embeddings.")
     
@@ -281,19 +289,22 @@ if __name__ == "__main__":
     captions_path = (Path(__file__).resolve().parent.parent / "data" / "flickr-8k" / "processed" / "flickr8k_captions.csv")
     captions_df = pd.read_csv(captions_path)
 
-    while CHUNK < 17:
-        # Get unique image names from the captions.csv
-        unique_image_names = captions_df['image'].iloc[CHUNK * CHUNK_SIZE * NUM_CHUNKS: (CHUNK + 1) * NUM_CHUNKS * CHUNK_SIZE]
-        print(f"Chunk from {CHUNK * CHUNK_SIZE * NUM_CHUNKS} to {(CHUNK + 1) * NUM_CHUNKS * CHUNK_SIZE}")
+    for path in ["cohere/flickr8k", "openai/flickr8k", "vertexai/flickr8k", "voyageai/flickr8k"]:
+        CHUNK = 0
 
-        # Path to the directory containing .npy files
-        data_path = (Path(__file__).resolve().parent.parent / "data" / "flickr-8k" / "image_emb")
-        flickr_image_embeddings = load_image_embeddings(data_path)
+        while CHUNK < 17:
+            # Get unique image names from the captions.csv
+            unique_image_names = captions_df['image'].iloc[CHUNK * CHUNK_SIZE * NUM_CHUNKS: (CHUNK + 1) * NUM_CHUNKS * CHUNK_SIZE]
+            print(f"Chunk from {CHUNK * CHUNK_SIZE * NUM_CHUNKS} to {(CHUNK + 1) * NUM_CHUNKS * CHUNK_SIZE}")
 
-        # Create DataFrame using the image names and loaded embeddings
-        image_embeddings_df = create_image_embeddings_df(unique_image_names, flickr_image_embeddings)
+            # Path to the directory containing .npy files
+            data_path = (Path(__file__).resolve().parent.parent / "data" / "flickr-8k" / "image_emb")
+            flickr_image_embeddings = load_image_embeddings(data_path)
 
-        # Measure distances using the created DataFrame
-        measure_distance_image(dataset="cohere/flickr8k", image_embeddings=image_embeddings_df)
+            # Create DataFrame using the image names and loaded embeddings
+            image_embeddings_df = create_image_embeddings_df(unique_image_names, flickr_image_embeddings)
 
-        CHUNK = CHUNK + 1
+            # Measure distances using the created DataFrame
+            measure_distance_image(dataset=path, image_embeddings=image_embeddings_df)
+
+            CHUNK = CHUNK + 1
