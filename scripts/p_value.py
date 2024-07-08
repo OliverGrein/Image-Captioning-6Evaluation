@@ -25,7 +25,6 @@ def kendalls_tau_p_value(tau, n) -> float:
 
     # Calculate two-tailed p-value
     p_value = 2 * (1 - stats.norm.cdf(abs(z_statistic)))
-    
 
     return p_value
 
@@ -34,7 +33,6 @@ if __name__ == "__main__":
     """
     If run as main, add p-values to the correlations.csv file.
     """
-
     correlations_path = Path(__file__).resolve().parent.parent / "results"
     df = pd.read_csv(Path(correlations_path / "correlations.csv"))
 
@@ -43,7 +41,6 @@ if __name__ == "__main__":
     for i, row in df.iterrows():
         tau = row["Correlation"]
         n = N_PAIRS
-        
         results.append((kendalls_tau_p_value(tau, n)))
     
     # Add column to dataframe
