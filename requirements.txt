@@ -8,3 +8,6 @@ google~=3.0.0
 vertexai~=1.49.0
 cohere~=5.5.8
 huggingface-hub~=0.23.4
+pillow~=10.3.0
+scipy~=1.14.0
+matplotlib~=3.9.1
