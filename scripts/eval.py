@@ -1,13 +1,15 @@
 import argparse
 import pandas as pd
 import matplotlib.pyplot as plt
+from pathlib import Path
 
 import csv
 import os
 
+RESULTS_PATH = Path(__file__).resolve().parent.parent / "results"
 
 def load_data(model, metric):
-    filename = f"results/{model}/{model}_{metric}_expert_distances.csv"
+    filename = RESULTS_PATH / f"{model}" / f"{model}_{metric}_expert_distances.csv"
     return pd.read_csv(filename)
 
 
@@ -25,7 +27,7 @@ def plot_distances(pivot_table, model, metric):
     plt.xlabel("Average Rating")
     plt.ylabel("Average Distance")
     plt.tight_layout()
-    plt.savefig(f"results/{model}/{metric}_plot.png")
+    plt.savefig(RESULTS_PATH / f"{model}" / f"{metric}_plot.png")
     plt.close()
 
 
@@ -70,7 +72,7 @@ def main(model, metric):
     breakpoints = get_breakpoints(pivot_table)
     correlation = calculate_correlation(df, breakpoints, metric)
 
-    correlations_file = "results/correlations.csv"
+    correlations_file = RESULTS_PATH / "correlations.csv"
     file_exists = os.path.isfile(correlations_file)
     with open(correlations_file, "a", newline="") as f:
         writer = csv.writer(f)
@@ -78,7 +80,7 @@ def main(model, metric):
             writer.writerow(["Model", "Metric", "Correlation"])
         writer.writerow([model, metric, correlation])
 
-    breakpoints_file = "results/breakpoints.csv"
+    breakpoints_file = RESULTS_PATH / "breakpoints.csv"
     file_exists = os.path.isfile(breakpoints_file)
     with open(breakpoints_file, "a", newline="") as f:
         writer = csv.writer(f)
